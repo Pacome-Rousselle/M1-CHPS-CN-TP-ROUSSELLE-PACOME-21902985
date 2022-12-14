@@ -53,9 +53,11 @@ testenv: bin/tp_testenv
 
 tpPoisson1D_iter: bin/tpPoisson1D_iter
 	$^
+	mv *.dat dat/
 
 tpPoisson1D_direct: bin/tpPoisson1D_direct
 	$^
+	mv *.dat dat/
 
 tp_env.o: $(TPDIRSRC)/tp_env.c
 	$(CC) $(OPTC) -c $(INCL) $(TPDIRSRC)/tp_env.c 
@@ -88,4 +90,4 @@ run_tpPoisson1D_direct:
 	bin/tpPoisson1D_direct
 
 clean:
-	rm -f *.o bin/*
+	rm -f *.o bin/* dat/*
