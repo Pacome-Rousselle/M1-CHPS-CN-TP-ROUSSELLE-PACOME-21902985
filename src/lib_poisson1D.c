@@ -47,12 +47,12 @@ void set_analytical_solution_DBC_1D(double* EX_SOL, double* X, int* la, double* 
 }  
 
 void set_grid_points_1D(double* x, int* la){
-  // X is equally segemented with steps of 1/la
+  // X is equally segmented with steps of 1/la
   // X(i-1) = X(i) - 1/la
   // X(i+1) = X(i) + 1/la
   for(int i = 0; i < *la; i++)
   {
-    x[i] = i / (1.0*(*la));
+    x[i] = (i+1)/ (1.0*(*la)+1);
   }
 }
 
