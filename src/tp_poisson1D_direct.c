@@ -52,8 +52,10 @@ int main(int argc,char *argv[])
   AB = (double *) malloc(sizeof(double)*lab*la);
 
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  // cblas_dgbmv()
   write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "AB.dat");
+  
+  // RHS <- AB*EX_SOL
+  cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,RHS,1);
 
   printf("Solution with LAPACK\n");
   /* LU Factorization */
@@ -67,12 +69,12 @@ int main(int argc,char *argv[])
   // write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "LU.dat");
   
   /* Solution (Triangular) */
-  if (info==0){
-    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, RHS, &la, &info);
-    if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
-  }else{
-    printf("\n INFO = %d\n",info);
-  }
+  // if (info==0){
+  //   dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, RHS, &la, &info);
+  //   if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
+  // }else{
+  //   printf("\n INFO = %d\n",info);
+  // }
 
   /* It can also be solved with dgbsv */
   // TODO : use dgbsv
