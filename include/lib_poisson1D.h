@@ -8,6 +8,7 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
+#include "atlas_headers.h"
 
 void set_GB_operator_colMajor_poisson1D(double* AB, int* lab, int *la, int *kv);
 void set_GB_operator_colMajor_poisson1D_Id(double* AB, int* lab, int *la, int *kv);
@@ -21,3 +22,5 @@ void write_vec(double* vec, int* la, char* filename);
 void write_xy(double* vec, double* x, int* la, char* filename);
 int indexABCol(int i, int j, int *lab);
 int dgbtrftridiag(int *la, int *n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info);
+/*Added functions*/
+double make_relres(double *a, double *b, double relres);
