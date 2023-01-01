@@ -67,6 +67,7 @@ int main(int argc,char *argv[])
 
   /* LU Factorization */
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+  set_dense_RHS_DBC_1D(TEST,&la,&T0,&T1);
 
   info=0;
   ipiv = (int *) calloc(la, sizeof(int));
@@ -83,19 +84,21 @@ int main(int argc,char *argv[])
   }
 
   /* LU for tridiagonal matrix  (can replace dgbtrf_) */
-  // set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  // //ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
+  set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+  set_dense_RHS_DBC_1D(TEST,&la,&T0,&T1);
 
-  // write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU.dat");
-  
-  // /* Solution (Triangular) */
-  // if (info==0){
-  //   dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, TEST, &la, &info, la);
-  //   write_vec(TEST, &la, "SOL_LU.dat");
-  //   if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
-  // }else{
-  //   printf("\n INFO = %d\n",info);
-  // }
+  ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
+
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU.dat");
+  /* Solution (Triangular) */
+
+  if (info==0){
+    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, TEST, &la, &info, la);
+    write_vec(TEST, &la, "MY_SOL_LU.dat");
+    if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
+  }else{
+    printf("\n INFO = %d\n",info);
+  }
 
   /* Relative forward error */
   relres = make_relres(EX_SOL,TEST, relres);

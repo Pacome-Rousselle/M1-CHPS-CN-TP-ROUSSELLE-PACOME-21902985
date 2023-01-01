@@ -11,7 +11,7 @@ void set_GB_operator_colMajor_poisson1D(double* AB, int *lab, int *la, int *kv){
   
   for(int i = 0; i<(*la); i++)
   {
-    // ld*j + i 
+    // ld*j + i => (i,j)
     AB[i*(*lab)] = 0;
     AB[i*(*lab)+1] = -1;
     AB[i*(*lab)+2] = 2;
@@ -169,6 +169,14 @@ void write_xy(double* vec, double* x, int* la, char* filename){
 int indexABCol(int i, int j, int *lab){
   return 0;
 }
-int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info){
+
+int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info)
+{
+  AB[3] /= AB[2];
+  for (int i = 1; i < (*la); i++)
+  {
+    AB[i*(*lab)+2] += AB[(i-1)*(*lab)+3];
+    AB[i*(*lab)+3] /= AB[i*(*lab)+2];
+  }
   return *info;
 }
