@@ -4,7 +4,6 @@
 /* to solve the Poisson 1D problem        */
 /******************************************/
 #include "lib_poisson1D.h"
-#include "atlas_headers.h"
 
 int main(int argc,char *argv[])
 /* ** argc: Nombre d'arguments */
@@ -18,7 +17,7 @@ int main(int argc,char *argv[])
   int info;
   int NRHS;
   double T0, T1;
-  double *RHS, *EX_SOL, *X;
+  double *TEST, *EX_RHS, *EX_SOL, *X;
   double **AAB;
   double *AB;
 
@@ -31,16 +30,17 @@ int main(int argc,char *argv[])
   T1=5.0;
 
   printf("--------- Poisson 1D ---------\n\n");
-  RHS=(double *) malloc(sizeof(double)*la);
+  EX_RHS=(double *) malloc(sizeof(double)*la);
   EX_SOL=(double *) malloc(sizeof(double)*la);
   X=(double *) malloc(sizeof(double)*la);
+  TEST=(double *) malloc(sizeof(double)*la);
 
   // TODO : you have to implement those functions
   set_grid_points_1D(X, &la);
-  set_dense_RHS_DBC_1D(RHS,&la,&T0,&T1);
+  set_dense_RHS_DBC_1D(EX_RHS,&la,&T0,&T1);
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   
-  write_vec(RHS, &la, "RHS.dat");
+  write_vec(EX_RHS, &la, "EX_RHS.dat");
   write_vec(EX_SOL, &la, "EX_SOL.dat");
   write_vec(X, &la, "X_grid.dat");
 
@@ -54,39 +54,65 @@ int main(int argc,char *argv[])
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
   write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "AB.dat");
   
-  // RHS <- AB*EX_SOL
-  cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,RHS,1);
+  printf("DGBMV\n");
+  // TEST <- AB*EX_SOL
+  cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,TEST,1);
+  write_vec(TEST, &la, "TEST.dat");
 
-  printf("Solution with LAPACK\n");
+  /* Relative forward error */
+  relres = make_relres(EX_RHS,TEST, relres);
+  printf("\nThe relative forward error for dgbmv is relres = %e\n",relres);
+
+  printf("\nSolution with LAPACK\n");
+
   /* LU Factorization */
+  set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+
   info=0;
   ipiv = (int *) calloc(la, sizeof(int));
   dgbtrf_(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_LU.dat");
+
+  /* Solution (Triangular) */
+  if (info==0){
+    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, TEST, &la, &info, la);
+    write_vec(TEST, &la, "SOL_LU.dat");
+    if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
+  }else{
+    printf("\n INFO = %d\n",info);
+  }
 
   /* LU for tridiagonal matrix  (can replace dgbtrf_) */
-  // ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
+  // set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+  // //ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
 
-  // write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "LU.dat");
+  // write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU.dat");
   
-  /* Solution (Triangular) */
+  // /* Solution (Triangular) */
   // if (info==0){
-  //   dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, RHS, &la, &info);
+  //   dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, TEST, &la, &info, la);
+  //   write_vec(TEST, &la, "SOL_LU.dat");
   //   if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   // }else{
   //   printf("\n INFO = %d\n",info);
   // }
 
-  /* It can also be solved with dgbsv */
-  // TODO : use dgbsv
-
-  write_xy(RHS, X, &la, "SOL.dat");
-
   /* Relative forward error */
-  // TODO : Compute relative norm of the residual
-  
+  relres = make_relres(EX_SOL,TEST, relres);
   printf("\nThe relative forward error is relres = %e\n",relres);
 
-  free(RHS);
+  /* It can also be solved with dgbsv */
+  set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+  set_dense_RHS_DBC_1D(EX_RHS,&la,&T0,&T1);
+  dgbsv_(&la, &kl, &ku, &NRHS, AB, &lab, ipiv, EX_RHS, &la, &info);
+  write_xy(EX_RHS, X, &la, "SOL.dat");
+
+  /* Relative forward error */
+  // relres = make_relres(EX_RHS,TEST, relres);
+  // printf("\nThe relative forward error is relres = %e\n",relres);
+
+  free(EX_RHS);
+  free(TEST);
   free(EX_SOL);
   free(X);
   free(AB);
