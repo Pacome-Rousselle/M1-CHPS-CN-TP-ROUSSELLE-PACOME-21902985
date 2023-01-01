@@ -56,6 +56,24 @@ void set_grid_points_1D(double* x, int* la){
   }
 }
 
+double make_relres(double *analytic, double *experimental, double relres)
+{
+  double *cpy = malloc(sizeof(analytic));
+  cblas_dcopy(1,analytic,1,cpy,1); //cpy is a copy of analytic
+  // norm of x is the square root of the sum of cpy's arguments squared 
+  // (||x|| = ddot(cpy))
+  double normx = cblas_ddot(1,cpy,1,cpy,1); 
+  sqrt(normx);
+
+  // (x = -^x + x) 
+  cblas_daxpy(1,-1.0,experimental,1,analytic,1);
+
+  // Relative forward error :
+  relres = (sqrt(cblas_ddot(1,analytic,1,analytic,1)))/normx;
+  free(cpy);
+  return relres;
+}
+
 void write_GB_operator_rowMajor_poisson1D(double* AB, int* lab, int* la, char* filename){
   FILE * file;
   int ii,jj;
