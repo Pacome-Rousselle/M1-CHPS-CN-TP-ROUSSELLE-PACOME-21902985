@@ -83,11 +83,16 @@ int indexABCol(int i, int j, int *lab){
 
 int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info)
 {
-  AB[3] /= AB[2];
+  double pivot = 0;
+
   for (int i = 1; i < (*la); i++)
   {
-    AB[i*(*lab)+2] += AB[(i-1)*(*lab)+3];
-    AB[i*(*lab)+3] /= AB[i*(*lab)+2];
+    pivot = AB[i*(*lab)+1]*AB[(i-1)*(*lab)+3]; // pivot = b(n-1)*c(n-1)
+    pivot /= AB[(i-1)*(*lab)+2]; // pivot = b(n-1)c(n-1)/a(n-1)
+    pivot *= -1.0; // pivot = -(b(n-1)c(n-1)/a(n-1))
+
+    AB[i*(*lab)+2] += pivot; // dn = a(n-1) - b(n-1)*c(n-1)/a(n-1)
+    AB[(i-1)*(*lab)+3] /= AB[(i-1)*(*lab)+2]; 
   }
   return *info;
 }
@@ -95,18 +100,34 @@ int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *i
 /**********************************************/
 /*         Iterative methods section          */
 /**********************************************/
-void richardson(double *AB, double *RHS)
-{
+void eig_poisson1D(double* eigval, int *la){
+}
+
+double eigmax_poisson1D(int *la){
+  return 0;
+}
+
+double eigmin_poisson1D(int *la){
+  return 0;
+}
+
+double richardson_alpha_opt(int *la){
+  return 0;
+}
+
+void richardson_alpha(double *AB, double *RHS, double *X, double *alpha_rich, int *lab, int *la,int *ku, int*kl, double *tol, int *maxit, double *resvec, int *nbite){
 
 }
 
-void jacobi(double *AB, double *RHS)
-{
+void extract_MB_jacobi_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv){
 
 }
 
-void gauss_seidel(double *AB, double *RHS)
-{
+void extract_MB_gauss_seidel_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv){
+
+}
+
+void richardson_MB(double *AB, double *RHS, double *X, double *MB, int *lab, int *la,int *ku, int*kl, double *tol, int *maxit, double *resvec, int *nbite){
 
 }
 /**********************************************/
