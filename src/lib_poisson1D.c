@@ -5,6 +5,9 @@
 /**********************************************/
 #include "lib_poisson1D.h"
 
+/**********************************************/
+/*          Direct methods section            */
+/**********************************************/
 void set_GB_operator_colMajor_poisson1D(double* AB, int *lab, int *la, int *kv){
   // lab = nb colonnes
   // la = nb lignes
@@ -74,6 +77,41 @@ double make_relres(double *analytic, double *experimental, double relres)
   return relres;
 }
 
+int indexABCol(int i, int j, int *lab){
+  return 0;
+}
+
+int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info)
+{
+  AB[3] /= AB[2];
+  for (int i = 1; i < (*la); i++)
+  {
+    AB[i*(*lab)+2] += AB[(i-1)*(*lab)+3];
+    AB[i*(*lab)+3] /= AB[i*(*lab)+2];
+  }
+  return *info;
+}
+
+/**********************************************/
+/*         Iterative methods section          */
+/**********************************************/
+void richardson(double *AB, double *RHS)
+{
+
+}
+
+void jacobi(double *AB, double *RHS)
+{
+
+}
+
+void gauss_seidel(double *AB, double *RHS)
+{
+
+}
+/**********************************************/
+/*           File writing section             */
+/**********************************************/
 void write_GB_operator_rowMajor_poisson1D(double* AB, int* lab, int* la, char* filename){
   FILE * file;
   int ii,jj;
@@ -166,17 +204,4 @@ void write_xy(double* vec, double* x, int* la, char* filename){
   } 
 }  
 
-int indexABCol(int i, int j, int *lab){
-  return 0;
-}
 
-int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info)
-{
-  AB[3] /= AB[2];
-  for (int i = 1; i < (*la); i++)
-  {
-    AB[i*(*lab)+2] += AB[(i-1)*(*lab)+3];
-    AB[i*(*lab)+3] /= AB[i*(*lab)+2];
-  }
-  return *info;
-}
