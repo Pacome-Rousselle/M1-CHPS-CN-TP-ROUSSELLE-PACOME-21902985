@@ -17,7 +17,7 @@ int main(int argc,char *argv[])
   int info;
   int NRHS;
   double T0, T1;
-  double *TEST, *EX_RHS, *EX_SOL, *X;
+  double *MY_RHS, *EX_RHS, *EX_SOL, *X;
   double **AAB;
   double *AB;
 
@@ -29,13 +29,13 @@ int main(int argc,char *argv[])
   T0=-5.0;
   T1=5.0;
 
-  printf("--------- Poisson 1D ---------\n\n");
+  printf("--------- Poisson 1D (direct) ---------\n\n");
   EX_RHS=(double *) malloc(sizeof(double)*la);
   EX_SOL=(double *) malloc(sizeof(double)*la);
   X=(double *) malloc(sizeof(double)*la);
-  TEST=(double *) malloc(sizeof(double)*la);
+  MY_RHS=(double *) malloc(sizeof(double)*la);
 
-  // TODO : you have to implement those functions
+  //Setting functions
   set_grid_points_1D(X, &la);
   set_dense_RHS_DBC_1D(EX_RHS,&la,&T0,&T1);
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
@@ -52,22 +52,23 @@ int main(int argc,char *argv[])
   AB = (double *) malloc(sizeof(double)*lab*la);
 
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "AB.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_AB.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_AB.dat");
   
   printf("DGBMV\n");
-  // TEST <- AB*EX_SOL
-  cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,TEST,1);
-  write_vec(TEST, &la, "TEST.dat");
+  // MY_RHS <- AB*EX_SOL
+  cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,MY_RHS,1);
+  write_vec(MY_RHS, &la, "MY_RHS.dat");
 
-  /* Relative forward error */
-  relres = make_relres(EX_RHS,TEST, relres);
+  /* Validation for dgbmv : relative forward error */
+  relres = make_relres(EX_RHS,MY_RHS, relres);
   printf("\nThe relative forward error for dgbmv is relres = %e\n",relres);
 
   printf("\nSolution with LAPACK\n");
 
   /* LU Factorization */
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  set_dense_RHS_DBC_1D(TEST,&la,&T0,&T1);
+  set_dense_RHS_DBC_1D(MY_RHS,&la,&T0,&T1);
 
   info=0;
   ipiv = (int *) calloc(la, sizeof(int));
@@ -76,8 +77,8 @@ int main(int argc,char *argv[])
 
   /* Solution (Triangular) */
   if (info==0){
-    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, TEST, &la, &info, la);
-    write_vec(TEST, &la, "SOL_LU.dat");
+    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, MY_RHS, &la, &info, la);
+    write_vec(MY_RHS, &la, "EX_SOL_LU.dat");
     if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   }else{
     printf("\n INFO = %d\n",info);
@@ -85,24 +86,25 @@ int main(int argc,char *argv[])
 
   /* LU for tridiagonal matrix  (can replace dgbtrf_) */
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  set_dense_RHS_DBC_1D(TEST,&la,&T0,&T1);
+  set_dense_RHS_DBC_1D(MY_RHS,&la,&T0,&T1);
 
   ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
 
   write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU.dat");
+
   /* Solution (Triangular) */
 
   if (info==0){
-    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, TEST, &la, &info, la);
-    write_vec(TEST, &la, "MY_SOL_LU.dat");
+    dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, MY_RHS, &la, &info, la);
+    write_vec(MY_RHS, &la, "MY_SOL_LU.dat");
     if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   }else{
     printf("\n INFO = %d\n",info);
   }
 
-  /* Relative forward error */
-  relres = make_relres(EX_SOL,TEST, relres);
-  printf("\nThe relative forward error is relres = %e\n",relres);
+  /* Validation of LU for tridiagonal matrix */
+  relres = make_relres(EX_SOL,MY_RHS, relres);
+  printf("\nThe relative forward error for LU is relres = %e\n",relres);
 
   /* It can also be solved with dgbsv */
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
@@ -111,13 +113,13 @@ int main(int argc,char *argv[])
   write_xy(EX_RHS, X, &la, "SOL.dat");
 
   /* Relative forward error */
-  // relres = make_relres(EX_RHS,TEST, relres);
+  // relres = make_relres(EX_RHS,MY_RHS, relres);
   // printf("\nThe relative forward error is relres = %e\n",relres);
 
   free(EX_RHS);
-  free(TEST);
+  free(MY_RHS);
   free(EX_SOL);
   free(X);
   free(AB);
-  printf("\n\n--------- End -----------\n");
+  printf("\n\n--------- End of direct methods -----------\n");
 }
