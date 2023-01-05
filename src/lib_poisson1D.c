@@ -11,16 +11,22 @@
 void set_GB_operator_colMajor_poisson1D(double* AB, int *lab, int *la, int *kv){
   // lab = nb colonnes
   // la = nb lignes
-  
+  int ld;
   for(int i = 0; i<(*la); i++)
   {
     // ld*j + i => (i,j)
-    AB[i*(*lab)] = 0;
-    AB[i*(*lab)+1] = -1;
-    AB[i*(*lab)+2] = 2;
-    AB[i*(*lab)+3] = -1;
+    ld = i*(*lab);
+    if((*kv) > 0)
+    {
+      AB[ld + *kv] = 0.0;
+    }
+    AB[ld+*kv] = -1.0;
+    AB[ld+*kv+1] = 2.0;
+    AB[ld+*kv+2] = -1.0;
   }
-  AB[1] = 0; AB[(*lab)*(*la)-1] = 0;
+  AB[0]=0.0;
+  if((*kv) > 0){AB[1] = 0.0;}
+  AB[(*lab)*(*la)-1] = 0.0;
 }
 
 void set_GB_operator_colMajor_poisson1D_Id(double* AB, int *lab, int *la, int *kv){
@@ -59,21 +65,16 @@ void set_grid_points_1D(double* x, int* la){
   }
 }
 
-double make_relres(double *analytic, double *experimental, double relres)
+double make_relres(double *analytic, double *experimental, double relres, int *la)
 {
-  double *cpy = malloc(sizeof(analytic));
-  cblas_dcopy(1,analytic,1,cpy,1); //cpy is a copy of analytic
-  // norm of x is the square root of the sum of cpy's arguments squared 
-  // (||x|| = ddot(cpy))
-  double normx = cblas_ddot(1,cpy,1,cpy,1); 
-  sqrt(normx);
+  // norm of x 
+  double normx = cblas_dnrm2(*la,analytic,1);
 
   // (x = -^x + x) 
-  cblas_daxpy(1,-1.0,experimental,1,analytic,1);
+  cblas_daxpy(*la,-1.0,experimental,1,analytic,1);
 
-  // Relative forward error :
-  relres = (sqrt(cblas_ddot(1,analytic,1,analytic,1)))/normx;
-  free(cpy);
+  // Relative forward error : ||(x = -^x + x)||/||x||
+  relres = cblas_dnrm2(*la,analytic,1)/normx;
   return relres;
 }
 
@@ -101,34 +102,67 @@ int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *i
 /*         Iterative methods section          */
 /**********************************************/
 void eig_poisson1D(double* eigval, int *la){
+  
 }
 
 double eigmax_poisson1D(int *la){
-  return 0;
+  double lambda = 1/((*la)+1); // h
+  lambda *= M_PI_2; // h*pi/2
+  lambda *= (*la); // n*h*pi/2
+  lambda = sin(lambda); // sin(n*h*pi/2)
+  lambda *= lambda; // sin²(n*h*pi/2)
+  lambda *= 4; // 4sin²(n*h*pi/2)
+  return lambda;
 }
 
 double eigmin_poisson1D(int *la){
-  return 0;
+  double lambda = 1/((*la)+1); // h
+  lambda *= M_PI_2; // h*pi/2
+  lambda = sin(lambda); // sin(h*pi/2)
+  lambda *= lambda; // sin²(h*pi/2)
+  lambda *= 4; // 4sin²(h*pi/2)
+  return lambda;
 }
 
 double richardson_alpha_opt(int *la){
-  return 0;
+  double opt = eigmax_poisson1D(la) + eigmin_poisson1D(la);
+  opt = 2/opt;
+  return opt;
 }
 
 void richardson_alpha(double *AB, double *RHS, double *X, double *alpha_rich, int *lab, int *la,int *ku, int*kl, double *tol, int *maxit, double *resvec, int *nbite){
+  double *tmp = malloc(sizeof(double)*(*la));
+  cblas_dcopy(*la,RHS,1,tmp,1);
 
+  //  Initialize r^0
+  //  r^0 := b - Ax^0
+  cblas_dgbmv(CblasColMajor,CblasNoTrans,*la,*la,*kl,*ku,-1.0,AB,*lab,X,1,1.0,tmp,1);
+
+  //  ||tmp||
+  double check = cblas_dnrm2(*la,tmp,1);
+  *nbite=0;
+  resvec[*nbite] = check;
+  printf("\ncheck = %lf, iter n°%d\n",check,*nbite);
+
+  while(check > (*tol) && *nbite < *maxit)
+  {
+    cblas_dcopy(*la,RHS,1,tmp,1);
+    //  tmp^k := b - Ax^k
+    cblas_dgbmv(CblasColMajor,CblasNoTrans,*la,*la,*kl,*ku,-1.0,AB,*lab,X,1,1.0,tmp,1);
+
+    //  x^(k+1) := x^k + α*tmp^k
+    cblas_daxpy(*la,(*alpha_rich),tmp,1,X,1);
+
+    //  ||tmp||
+    check = cblas_dnrm2(*la,tmp,1);
+    (*nbite)++;
+    printf("check = %lf, iter n°%d\n",check,*nbite);
+    resvec[*nbite] = check;
+  }
+  free(tmp);
 }
 
 void extract_MB_jacobi_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv){
-
-}
-
-void extract_MB_gauss_seidel_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv){
-
-}
-
-void richardson_MB(double *AB, double *RHS, double *X, double *MB, int *lab, int *la,int *ku, int*kl, double *tol, int *maxit, double *resvec, int *nbite){
-
 }
 /**********************************************/
 /*           File writing section             */

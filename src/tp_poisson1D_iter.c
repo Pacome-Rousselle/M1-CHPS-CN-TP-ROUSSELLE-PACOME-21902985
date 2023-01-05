@@ -47,9 +47,9 @@ int main(int argc,char *argv[])
   set_dense_RHS_DBC_1D(RHS,&la,&T0,&T1);
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   
-  write_vec(RHS, &la, "RHS.dat");
-  write_vec(EX_SOL, &la, "EX_SOL.dat");
-  write_vec(X, &la, "X_grid.dat");
+  write_vec(RHS, &la, "RHS_iter.dat");
+  write_vec(EX_SOL, &la, "EX_SOL_iter.dat");
+  write_vec(X, &la, "X_grid_iter.dat");
 
   kv=0;
   ku=1;
@@ -57,16 +57,17 @@ int main(int argc,char *argv[])
   lab=kv+kl+ku+1;
   
   AB = (double *) malloc(sizeof(double)*lab*la);
+
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  
-  /* uncomment the following to check matrix A */
-  // write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "AB.dat");
-  
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_AB_iter.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_AB_iter.dat");
+
   /********************************************/
   /* Solution (Richardson with optimal alpha) */
 
   /* Computation of optimum alpha */
-  opt_alpha = richardson_alpha_opt(&la);
+  //opt_alpha = richardson_alpha_opt(&la);
+  opt_alpha = 0.5;
   printf("Optimal alpha for simple Richardson iteration is : %lf",opt_alpha); 
 
   /* Solve */
@@ -94,10 +95,10 @@ int main(int argc,char *argv[])
   // richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
   /* Write solution */
-  write_vec(SOL, &la, "SOL.dat");
+  write_vec(SOL, &la, "SOL_iter.dat");
 
   /* Write convergence history */
-  write_vec(resvec, &nbite, "RESVEC.dat");
+  write_vec(resvec, &nbite, "RESVEC_iter.dat");
 
   free(resvec);
   free(RHS);
