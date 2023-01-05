@@ -46,7 +46,7 @@ OBJTP2ITER= lib_poisson1D.o tp_poisson1D_iter.o
 OBJTP2DIRECT= lib_poisson1D.o tp_poisson1D_direct.o
 #
 
-all: bin/tp_testenv bin/tpPoisson1D_iter bin/tpPoisson1D_direct
+all: testenv tpPoisson1D_iter tpPoisson1D_direct
 
 testenv: bin/tp_testenv
 	$^
@@ -97,4 +97,5 @@ clean:
 	rm -f *.o *.dat 
 	rm -f bin/*
 	rm -f dat/direct/analytical/* dat/direct/experimental/*
-	rm -f dat/iter/analytical/* dat/iter/experimental/* dat/*.dat
+	rm -f dat/iter/analytical/* dat/iter/experimental/* 
+	rm -f dat/direct/*.dat dat/iter/*.dat

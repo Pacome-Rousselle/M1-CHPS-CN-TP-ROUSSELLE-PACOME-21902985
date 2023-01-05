@@ -40,9 +40,9 @@ int main(int argc,char *argv[])
   set_dense_RHS_DBC_1D(EX_RHS,&la,&T0,&T1);
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   
-  write_vec(EX_RHS, &la, "EX_RHS.dat");
-  write_vec(EX_SOL, &la, "EX_SOL.dat");
-  write_vec(X, &la, "X_grid.dat");
+  write_vec(EX_RHS, &la, "EX_RHS_direct.dat");
+  write_vec(EX_SOL, &la, "EX_SOL_direct.dat");
+  write_vec(X, &la, "X_grid_direct.dat");
 
   kv=1;
   ku=1;
@@ -52,16 +52,16 @@ int main(int argc,char *argv[])
   AB = (double *) malloc(sizeof(double)*lab*la);
 
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_AB.dat");
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_AB.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_AB_direct.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_AB_direct.dat");
   
   printf("DGBMV\n");
   // MY_RHS <- AB*EX_SOL
   cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,MY_RHS,1);
-  write_vec(MY_RHS, &la, "MY_RHS.dat");
+  write_vec(MY_RHS, &la, "MY_RHS_direct.dat");
 
   /* Validation for dgbmv : relative forward error */
-  relres = make_relres(EX_RHS,MY_RHS, relres);
+  relres = make_relres(EX_RHS,MY_RHS, relres, &la);
   printf("\nThe relative forward error for dgbmv is relres = %e\n",relres);
 
   printf("\nSolution with LAPACK\n");
@@ -73,12 +73,12 @@ int main(int argc,char *argv[])
   info=0;
   ipiv = (int *) calloc(la, sizeof(int));
   dgbtrf_(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_LU.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_LU_direct.dat");
 
   /* Solution (Triangular) */
   if (info==0){
     dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, MY_RHS, &la, &info, la);
-    write_vec(MY_RHS, &la, "EX_SOL_LU.dat");
+    write_vec(MY_RHS, &la, "EX_SOL_LU_direct.dat");
     if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   }else{
     printf("\n INFO = %d\n",info);
@@ -90,27 +90,27 @@ int main(int argc,char *argv[])
 
   ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
 
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU_direct.dat");
 
   /* Solution (Triangular) */
 
   if (info==0){
     dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, MY_RHS, &la, &info, la);
-    write_vec(MY_RHS, &la, "MY_SOL_LU.dat");
+    write_vec(MY_RHS, &la, "MY_SOL_LU_direct.dat");
     if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   }else{
     printf("\n INFO = %d\n",info);
   }
 
   /* Validation of LU for tridiagonal matrix */
-  relres = make_relres(EX_SOL,MY_RHS, relres);
+  relres = make_relres(EX_SOL,MY_RHS, relres, &la);
   printf("\nThe relative forward error for LU is relres = %e\n",relres);
 
   /* It can also be solved with dgbsv */
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
   set_dense_RHS_DBC_1D(EX_RHS,&la,&T0,&T1);
   dgbsv_(&la, &kl, &ku, &NRHS, AB, &lab, ipiv, EX_RHS, &la, &info);
-  write_xy(EX_RHS, X, &la, "SOL.dat");
+  write_xy(EX_RHS, X, &la, "SOL_direct.dat");
 
   /* Relative forward error */
   // relres = make_relres(EX_RHS,MY_RHS, relres);
