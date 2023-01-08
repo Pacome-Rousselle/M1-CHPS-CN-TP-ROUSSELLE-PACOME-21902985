@@ -55,6 +55,8 @@ tpPoisson1D_iter: bin/tpPoisson1D_iter
 	$^
 	mv EX*_iter.dat dat/iter/analytical
 	mv MY*_iter.dat dat/iter/experimental
+	mv J*_iter.dat dat/iter/experimental/jacobi
+	mv GS*_iter.dat dat/iter/experimental/gauss-seidel
 	mv *_iter.dat dat/iter
 
 tpPoisson1D_direct: bin/tpPoisson1D_direct
@@ -97,5 +99,6 @@ clean:
 	rm -f *.o *.dat 
 	rm -f bin/*
 	rm -f dat/direct/analytical/* dat/direct/experimental/*
-	rm -f dat/iter/analytical/* dat/iter/experimental/* 
+	rm -f dat/iter/analytical/*.dat dat/iter/experimental/*.dat
+	rm -f dat/iter/experimental/jacobi/* dat/iter/experimental/gauss-seidel/*
 	rm -f dat/direct/*.dat dat/iter/*.dat

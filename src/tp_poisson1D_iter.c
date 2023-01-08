@@ -35,7 +35,7 @@ int main(int argc,char *argv[])
   T0=5.0;
   T1=20.0;
 
-  printf("--------- Poisson 1D ---------\n\n");
+  printf("--------- Poisson 1D (iter) ---------\n\n");
   RHS=(double *) malloc(sizeof(double)*la);
   SOL=(double *) calloc(la, sizeof(double)); 
   EX_SOL=(double *) malloc(sizeof(double)*la);
@@ -91,13 +91,13 @@ int main(int argc,char *argv[])
   kl = 1;
   MB = (double *) malloc(sizeof(double)*(lab)*la);
   extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "MB_J_iter.dat");
+  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "J_MB_iter.dat");
 
   /* Solve with General Richardson */
   richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
-  write_vec(SOL, &la, "MB_J_SOL_iter.dat");
-  write_vec(resvec, &nbite, "RESVEC_J_iter.dat");
+  write_vec(SOL, &la, "J_MB_SOL_iter.dat");
+  write_vec(resvec, &nbite, "J_RESVEC_iter.dat");
 
   relres = make_relres(EX_SOL,SOL, &la);
   printf("\nNb iter for Jacobi : %d\n", nbite);
@@ -105,14 +105,14 @@ int main(int argc,char *argv[])
 
   MB = (double *) malloc(sizeof(double)*(lab)*la);
   extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "MB_GS_iter.dat");
+  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "GS_MB_iter.dat");
 
   /* Solve with General Richardson */
   SOL=(double *) calloc(la, sizeof(double));
   richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
   /* Write solution */
-  write_vec(SOL, &la, "MB_GS_SOL_iter.dat");
+  write_vec(SOL, &la, "GS_MB_SOL_iter.dat");
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   relres = make_relres(EX_SOL,SOL, &la);
 
@@ -120,7 +120,7 @@ int main(int argc,char *argv[])
   printf("The relative forward error for Gauss-Seidel is relres = %e\n",relres);
 
   /* Write convergence history */
-  write_vec(resvec, &nbite, "RESVEC_GS_iter.dat");
+  write_vec(resvec, &nbite, "GS_RESVEC_iter.dat");
   
   free(resvec);
   free(RHS);
@@ -129,5 +129,5 @@ int main(int argc,char *argv[])
   free(X);
   free(AB);
   free(MB);
-  printf("\n\n--------- End -----------\n");
+  printf("\n\n--------- End of iterative methods -----------\n");
 }
