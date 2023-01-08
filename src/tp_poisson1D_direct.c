@@ -61,7 +61,7 @@ int main(int argc,char *argv[])
   write_vec(MY_RHS, &la, "MY_RHS_direct.dat");
 
   /* Validation for dgbmv : relative forward error */
-  relres = make_relres(EX_RHS,MY_RHS, relres, &la);
+  relres = make_relres(EX_RHS,MY_RHS, &la);
   printf("\nThe relative forward error for dgbmv is relres = %e\n",relres);
 
   printf("\nSolution with LAPACK\n");
@@ -103,7 +103,7 @@ int main(int argc,char *argv[])
   }
 
   /* Validation of LU for tridiagonal matrix */
-  relres = make_relres(EX_SOL,MY_RHS, relres, &la);
+  relres = make_relres(EX_SOL,MY_RHS, &la);
   printf("\nThe relative forward error for LU is relres = %e\n",relres);
 
   /* It can also be solved with dgbsv */

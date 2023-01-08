@@ -24,7 +24,7 @@ int indexABCol(int i, int j, int *lab);
 int dgbtrftridiag(int *la, int *n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info);
 /*Added functions*/
 
-double make_relres(double *analytic, double *experimental, double relres, int *la);
+double make_relres(double *analytic, double *experimental, int *la);
 
 void eig_poisson1D(double* eigval, int *la);
 double eigmax_poisson1D(int *la);
@@ -34,3 +34,5 @@ double richardson_alpha_opt(int *la);
 
 void richardson_alpha(double *AB, double *RHS, double *X, double *alpha_rich, int *lab, int *la,int *ku, int*kl, double *tol, int *maxit, double *resvec, int *nbite);
 void extract_MB_jacobi_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv);
+void extract_MB_gauss_seidel_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv);
+void richardson_MB(double *AB, double *RHS, double *X, double *MB, int *lab, int *la, int *ku, int *kl, double *tol, int *maxit, double *resvec, int *nbite);
