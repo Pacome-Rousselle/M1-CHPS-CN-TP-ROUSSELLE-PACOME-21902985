@@ -65,7 +65,7 @@ void set_grid_points_1D(double* x, int* la){
   }
 }
 
-double make_relres(double *analytic, double *experimental, double relres, int *la)
+double make_relres(double *analytic, double *experimental, int *la)
 {
   // norm of x 
   double normx = cblas_dnrm2(*la,analytic,1);
@@ -74,8 +74,7 @@ double make_relres(double *analytic, double *experimental, double relres, int *l
   cblas_daxpy(*la,-1.0,experimental,1,analytic,1);
 
   // Relative forward error : ||(x = -^x + x)||/||x||
-  relres = cblas_dnrm2(*la,analytic,1)/normx;
-  return relres;
+  return (cblas_dnrm2(*la,analytic,1)/normx);
 }
 
 int indexABCol(int i, int j, int *lab){
@@ -142,7 +141,6 @@ void richardson_alpha(double *AB, double *RHS, double *X, double *alpha_rich, in
   double check = cblas_dnrm2(*la,tmp,1);
   *nbite=0;
   resvec[*nbite] = check;
-  printf("\ncheck = %lf, iter n°%d\n",check,*nbite);
 
   while(check > (*tol) && *nbite < *maxit)
   {
@@ -156,13 +154,75 @@ void richardson_alpha(double *AB, double *RHS, double *X, double *alpha_rich, in
     //  ||tmp||
     check = cblas_dnrm2(*la,tmp,1);
     (*nbite)++;
-    printf("check = %lf, iter n°%d\n",check,*nbite);
     resvec[*nbite] = check;
   }
   free(tmp);
 }
 
 void extract_MB_jacobi_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv){
+  int ld;
+  for(int i = 0; i<(*la); i++)
+  {
+    // ld*j + i => (i,j)
+    ld = i*(*lab);
+    MB[ld+*kv] = AB[ld+*kv];
+  }
+}
+
+void extract_MB_gauss_seidel_tridiag(double *AB, double *MB, int *lab, int *la,int *ku, int*kl, int *kv){
+  int ld;
+  for(int i = 0; i<(*la); i++)
+  {
+    // ld*j + i => (i,j)
+    ld = i*(*lab);
+    MB[ld+*kv] = AB[ld+*kv];
+    MB[ld+*kv+1] = AB[ld+*kv+1];
+  }
+}
+
+void richardson_MB(double *AB, double *RHS, double *X, double *MB, int *lab, int *la, int *ku, int *kl, double *tol, int *maxit, double *resvec, int *nbite){
+  //r
+  double *tmp = malloc(sizeof(double)*(*la));
+  cblas_dcopy(*la,RHS,1,tmp,1);
+
+  //  Initialize r^0
+  //  r^0 := b - Ax^0
+  cblas_dgbmv(CblasColMajor,CblasNoTrans,*la,*la,*kl,*ku,-1.0,AB,*lab,X,1,1.0,tmp,1);
+
+  int info; int NHRS = 1;
+  int *ipiv = (int *)calloc(*la, sizeof(int));
+  int ku_mb = (*ku)-1;
+  dgbtrf_(la,la,kl,&ku_mb,MB,lab,ipiv,&info);
+
+  if(info != 0)
+  {
+    printf("LU factorisation error : info = %d\n", info);
+  }
+
+  //  ||tmp||
+  double check = cblas_dnrm2(*la,tmp,1);
+  *nbite=0;
+  resvec[*nbite] = check;
+  
+  while((check > (*tol)) && ((*nbite) < (*maxit)))
+  {
+    cblas_dcopy(*la,RHS,1,tmp,1);
+    //  tmp^k := b - Ax^k
+    cblas_dgbmv(CblasColMajor,CblasNoTrans,*la,*la,*kl,*ku,-1.0,AB,*lab,X,1,1.0,tmp,1);
+
+    //  tmp^k := D^-1*tmp^k (= tmp^k/D)
+    dgbtrs_("N",la,kl,&ku_mb,&NHRS,MB,lab,ipiv,tmp,la,&info,*la);
+
+    //  x^(k+1) := x^k + tmp^k
+    cblas_daxpy(*la,1.0,tmp,1,X,1);
+
+    //  ||tmp||
+    check = cblas_dnrm2(*la,tmp,1);
+    (*nbite)++;
+    resvec[*nbite] = check;
+  }
+  free(ipiv);
+  free(tmp);
 }
 /**********************************************/
 /*           File writing section             */

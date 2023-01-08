@@ -68,7 +68,7 @@ int main(int argc,char *argv[])
   /* Computation of optimum alpha */
   //opt_alpha = richardson_alpha_opt(&la);
   opt_alpha = 0.5;
-  printf("Optimal alpha for simple Richardson iteration is : %lf",opt_alpha); 
+  printf("Optimal alpha for simple Richardson iteration is : %lf\n",opt_alpha); 
 
   /* Solve */
   double tol=1e-3;
@@ -80,26 +80,48 @@ int main(int argc,char *argv[])
 
   /* Solve with Richardson alpha */
   richardson_alpha(AB, RHS, SOL, &opt_alpha, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+  printf("Nb iter for richardson alpha: %d\n", nbite);
 
   /* Richardson General Tridiag */
 
   /* get MB (:=M, D for Jacobi, (D-E) for Gauss-seidel) */
+  SOL=(double *) calloc(la, sizeof(double));
   kv = 1;
   ku = 1;
   kl = 1;
   MB = (double *) malloc(sizeof(double)*(lab)*la);
-  // extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  // extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  
+  extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
+  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "MB_J_iter.dat");
+
   /* Solve with General Richardson */
-  // richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+  richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+  
+  write_vec(SOL, &la, "MB_J_SOL_iter.dat");
+  write_vec(resvec, &nbite, "RESVEC_J_iter.dat");
+
+  relres = make_relres(EX_SOL,SOL, &la);
+  printf("\nNb iter for Jacobi : %d\n", nbite);
+  printf("The relative forward error for Jacobi is relres = %e\n",relres);
+
+  MB = (double *) malloc(sizeof(double)*(lab)*la);
+  extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
+  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "MB_GS_iter.dat");
+
+  /* Solve with General Richardson */
+  SOL=(double *) calloc(la, sizeof(double));
+  richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
   /* Write solution */
-  write_vec(SOL, &la, "SOL_iter.dat");
+  write_vec(SOL, &la, "MB_GS_SOL_iter.dat");
+  set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
+  relres = make_relres(EX_SOL,SOL, &la);
+
+  printf("\nNb iter for Gauss-Seidel : %d\n", nbite);
+  printf("The relative forward error for Gauss-Seidel is relres = %e\n",relres);
 
   /* Write convergence history */
-  write_vec(resvec, &nbite, "RESVEC_iter.dat");
-
+  write_vec(resvec, &nbite, "RESVEC_GS_iter.dat");
+  
   free(resvec);
   free(RHS);
   free(SOL);
