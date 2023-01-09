@@ -12,20 +12,22 @@ void set_GB_operator_colMajor_poisson1D(double* AB, int *lab, int *la, int *kv){
   // lab = nb colonnes
   // la = nb lignes
   int ld;
-  for(int i = 0; i<(*la); i++)
+  for(int j = 0; j<(*la); j++)
   {
     // ld*j + i => (i,j)
-    ld = i*(*lab);
+    ld = j*(*lab);
     if((*kv) > 0)
     {
-      AB[ld + *kv] = 0.0;
+      for (int i = ld; i < *kv; i++)
+      {
+        AB[i] = 0.0;
+      }
     }
     AB[ld+*kv] = -1.0;
     AB[ld+*kv+1] = 2.0;
     AB[ld+*kv+2] = -1.0;
   }
-  AB[0]=0.0;
-  if((*kv) > 0){AB[1] = 0.0;}
+  AB[*kv] = 0.0;
   AB[(*lab)*(*la)-1] = 0.0;
 }
 
