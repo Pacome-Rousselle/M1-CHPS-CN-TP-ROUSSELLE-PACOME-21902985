@@ -194,16 +194,6 @@ int main(int argc,char *argv[])
     relres = make_relres(EX_SOL,SOL, &la);
     fprintf(ferr, "%e\n",relres);
   }
-  kv = 0;
-  set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  write_GB_operator_colMajor_poisson1D(AB,&lab,&la,"tes");
-  kv = 1;
-  free(MB); MB = (double *) calloc(lab*la,sizeof(double));
-  extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  write_GB_operator_colMajor_poisson1D(MB,&lab,&la,"tes2");
-  MB = (double *) realloc(MB, sizeof(double)*lab*la);
-  extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  write_GB_operator_colMajor_poisson1D(MB,&lab,&la,"tes3");
 
   free(resvec);
   free(RHS);
