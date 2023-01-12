@@ -58,12 +58,14 @@ tpPoisson1D_iter: bin/tpPoisson1D_iter
 	mv J*_iter.dat dat/iter/experimental/jacobi
 	mv GS*_iter.dat dat/iter/experimental/gauss-seidel
 	mv *_iter.dat dat/iter
+	mv *_graphit.dat graphs/iter
 
 tpPoisson1D_direct: bin/tpPoisson1D_direct
 	$^
 	mv EX*_direct.dat dat/direct/analytical
 	mv MY*_direct.dat dat/direct/experimental
 	mv *_direct.dat dat/direct
+	mv *_graphd.dat graphs/direct
 
 tp_env.o: $(TPDIRSRC)/tp_env.c
 	$(CC) $(OPTC) -c $(INCL) $(TPDIRSRC)/tp_env.c 
@@ -102,3 +104,4 @@ clean:
 	rm -f dat/iter/analytical/*.dat dat/iter/experimental/*.dat
 	rm -f dat/iter/experimental/jacobi/* dat/iter/experimental/gauss-seidel/*
 	rm -f dat/direct/*.dat dat/iter/*.dat
+	rm -f graphs/direct/*.dat graphs/iter/*.dat

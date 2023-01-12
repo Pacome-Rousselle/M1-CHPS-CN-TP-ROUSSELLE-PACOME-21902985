@@ -97,7 +97,7 @@ int main(int argc,char *argv[])
   richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
   write_vec(SOL, &la, "J_MB_SOL_iter.dat");
-  write_vec(resvec, &nbite, "J_RESVEC_iter.dat");
+  write_vec(resvec, &nbite, "J_RESVEC_graphit.dat");
 
   relres = make_relres(EX_SOL,SOL, &la);
   printf("\nNb iter for Jacobi : %d\n", nbite);
@@ -120,8 +120,91 @@ int main(int argc,char *argv[])
   printf("The relative forward error for Gauss-Seidel is relres = %e\n",relres);
 
   /* Write convergence history */
-  write_vec(resvec, &nbite, "GS_RESVEC_iter.dat");
+  write_vec(resvec, &nbite, "GS_RESVEC_graphit.dat");
   
+  /* Complexity testing */
+  clock_t top;
+  
+  FILE *iter = fopen("iter_graphit.dat", "w");
+  if(iter == NULL){perror("iter_graphit.dat");}
+
+  FILE *ferr = fopen("errav_graphit.dat", "w");
+  if(ferr == NULL){perror("errav_graphit.dat");}
+  
+  for(nbpoints = 100; nbpoints < 10000; nbpoints += 100)
+  {
+    la = nbpoints-2;
+    kv = 0;
+    RHS =(double *) realloc(RHS, sizeof(double)*la);
+    X =(double *) realloc(X, sizeof(double)*la);
+    EX_SOL = (double *) realloc(EX_SOL, sizeof(double)*la);
+
+    AB = (double *) realloc(AB, sizeof(double)*lab*la);
+
+    free(ipiv); ipiv = (int *) calloc(la, sizeof(int)); // realloc at 0
+    free(SOL);  SOL =(double *) calloc(la, sizeof(double));// realloc at 0
+    
+    set_grid_points_1D(X, &la);
+
+    // Richardson alpha
+    set_dense_RHS_DBC_1D(RHS,&la,&T0,&T1);
+    set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+
+    top = clock();
+    richardson_alpha(AB, RHS, SOL, &opt_alpha, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+    fprintf(iter, "%f ",((double)(clock() - top)/CLOCKS_PER_SEC));
+
+    set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
+    relres = make_relres(EX_SOL,SOL, &la);
+    fprintf(ferr, "%e ",relres);
+
+    // Jacobi
+    kv = 0;
+    set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+    kv = 1;
+    set_dense_RHS_DBC_1D(RHS,&la,&T0,&T1);
+    free(SOL);  SOL =(double *) calloc(la, sizeof(double));// realloc at 0
+
+    free(MB); MB = (double *) calloc(lab*la,sizeof(double));// realloc at 0
+    extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
+
+    top = clock();
+    richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+    fprintf(iter, "%f ",((double)(clock() - top)/CLOCKS_PER_SEC));
+    
+    set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
+    relres = make_relres(EX_SOL,SOL, &la);
+    fprintf(ferr, "%e ",relres);
+
+    // Gauss-Seidel
+    kv = 0;
+    set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+    kv = 1;
+    set_dense_RHS_DBC_1D(RHS,&la,&T0,&T1);
+    free(SOL);  SOL =(double *) calloc(la, sizeof(double));// realloc at 0
+
+    free(MB); MB = (double *) calloc(lab*la,sizeof(double));// realloc at 0
+    extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
+
+    top = clock();
+    richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+    fprintf(iter, "%f\n",((double)(clock() - top)/CLOCKS_PER_SEC));
+    
+    set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
+    relres = make_relres(EX_SOL,SOL, &la);
+    fprintf(ferr, "%e\n",relres);
+  }
+  kv = 0;
+  set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
+  write_GB_operator_colMajor_poisson1D(AB,&lab,&la,"tes");
+  kv = 1;
+  free(MB); MB = (double *) calloc(lab*la,sizeof(double));
+  extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
+  write_GB_operator_colMajor_poisson1D(MB,&lab,&la,"tes2");
+  MB = (double *) realloc(MB, sizeof(double)*lab*la);
+  extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
+  write_GB_operator_colMajor_poisson1D(MB,&lab,&la,"tes3");
+
   free(resvec);
   free(RHS);
   free(SOL);
