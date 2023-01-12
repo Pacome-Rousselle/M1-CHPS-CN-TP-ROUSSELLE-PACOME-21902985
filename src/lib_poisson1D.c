@@ -18,7 +18,7 @@ void set_GB_operator_colMajor_poisson1D(double* AB, int *lab, int *la, int *kv){
     ld = j*(*lab);
     if((*kv) > 0)
     {
-      for (int i = ld; i < *kv; i++)
+      for (int i = ld; i < (ld+*kv); i++)
       {
         AB[i] = 0.0;
       }
@@ -91,10 +91,9 @@ int dgbtrftridiag(int *la, int*n, int *kl, int *ku, double *AB, int *lab, int *i
   {
     pivot = AB[i*(*lab)+1]*AB[(i-1)*(*lab)+3]; // pivot = b(n-1)*c(n-1)
     pivot /= AB[(i-1)*(*lab)+2]; // pivot = b(n-1)c(n-1)/a(n-1)
-    pivot *= -1.0; // pivot = -(b(n-1)c(n-1)/a(n-1))
 
-    AB[i*(*lab)+2] += pivot; // dn = a(n-1) - b(n-1)*c(n-1)/a(n-1)
-    AB[(i-1)*(*lab)+3] /= AB[(i-1)*(*lab)+2]; 
+    AB[i*(*lab)+2] -= pivot; // dn = a(n-1) - b(n-1)*c(n-1)/a(n-1)
+    AB[(i-1)*(*lab)+3] /= AB[(i-1)*(*lab)+2]; //c(n-1) = c(n-1)/d(n-1)
   }
   return *info;
 }
