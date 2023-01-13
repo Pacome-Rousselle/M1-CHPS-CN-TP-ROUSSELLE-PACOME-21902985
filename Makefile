@@ -47,6 +47,7 @@ OBJTP2DIRECT= lib_poisson1D.o tp_poisson1D_direct.o
 #
 
 all: testenv tpPoisson1D_iter tpPoisson1D_direct
+	rm -f *.o
 	./plotting.sh
 
 testenv: bin/tp_testenv
@@ -54,11 +55,9 @@ testenv: bin/tp_testenv
 
 tpPoisson1D_iter: bin/tpPoisson1D_iter
 	$^
-	rm -f *.o
 
 tpPoisson1D_direct: bin/tpPoisson1D_direct
 	$^
-	rm -f *.o
 
 tp_env.o: $(TPDIRSRC)/tp_env.c
 	$(CC) $(OPTC) -c $(INCL) $(TPDIRSRC)/tp_env.c 
