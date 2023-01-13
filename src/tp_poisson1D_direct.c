@@ -40,9 +40,9 @@ int main(int argc,char *argv[])
   set_dense_RHS_DBC_1D(EX_RHS,&la,&T0,&T1);
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   
-  write_vec(EX_RHS, &la, "EX_RHS_direct.dat");
-  write_vec(EX_SOL, &la, "EX_SOL_direct.dat");
-  write_vec(X, &la, "X_grid_direct.dat");
+  write_vec(EX_RHS, &la, "dat/direct/analytical/EX_RHS_direct.dat");
+  write_vec(EX_SOL, &la, "dat/direct/analytical/EX_SOL_direct.dat");
+  write_vec(X, &la, "dat/direct/analytical/X_grid_direct.dat");
 
   kv=1;
   ku=1;
@@ -52,13 +52,13 @@ int main(int argc,char *argv[])
   AB = (double *) malloc(sizeof(double)*lab*la);
 
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_AB_direct.dat");
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_AB_direct.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "dat/direct/experimental/MY_AB_direct.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "dat/direct/analytical/EX_AB_direct.dat");
   
   printf("DGBMV\n");
   // MY_RHS <- AB*EX_SOL
   cblas_dgbmv(CblasColMajor,CblasNoTrans,la,la,kl,ku,1.0,AB+1,lab,EX_SOL,1,0.0,MY_RHS,1);
-  write_vec(MY_RHS, &la, "MY_RHS_direct.dat");
+  write_vec(MY_RHS, &la, "dat/direct/experimental/MY_RHS_direct.dat");
 
   /* Validation for dgbmv : relative forward error */
   relres = make_relres(EX_RHS,MY_RHS, &la);
@@ -73,12 +73,12 @@ int main(int argc,char *argv[])
   info=0;
   ipiv = (int *) calloc(la, sizeof(int));
   dgbtrf_(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_LU_direct.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "dat/direct/analytical/EX_LU_direct.dat");
 
   /* Solution (Triangular) */
   if (info==0){
     dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, MY_RHS, &la, &info, la);
-    write_vec(MY_RHS, &la, "EX_SOL_LU_direct.dat");
+    write_vec(MY_RHS, &la, "dat/direct/analytical/EX_SOL_LU_direct.dat");
     if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   }else{
     printf("\n INFO = %d\n",info);
@@ -96,13 +96,13 @@ int main(int argc,char *argv[])
 
   ierr = dgbtrftridiag(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
 
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_LU_direct.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "dat/direct/experimental/MY_LU_direct.dat");
 
   /* Solution (Triangular) */
 
   if (info==0){
     dgbtrs_("N", &la, &kl, &ku, &NRHS, AB, &lab, ipiv, MY_RHS, &la, &info, la);
-    write_vec(MY_RHS, &la, "MY_SOL_LU_direct.dat");
+    write_vec(MY_RHS, &la, "dat/direct/experimental/MY_SOL_LU_direct.dat");
     if (info!=0){printf("\n INFO DGBTRS = %d\n",info);}
   }else{
     printf("\n INFO = %d\n",info);
@@ -118,7 +118,7 @@ int main(int argc,char *argv[])
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
 
   dgbsv_(&la, &kl, &ku, &NRHS, AB, &lab, ipiv, EX_RHS, &la, &info);
-  write_xy(EX_RHS, X, &la, "SOL_direct.dat");
+  write_xy(EX_RHS, X, &la, "dat/direct/SOL_direct.dat");
 
   /* Relative forward error for dgbsv*/
   relres = make_relres(EX_SOL,EX_RHS,&la);
@@ -127,14 +127,14 @@ int main(int argc,char *argv[])
   /* Complexity testing */
   clock_t top;
   
-  FILE *direct = fopen("direct_graphd.dat", "w");
-  if(direct == NULL){perror("direct_graphd.dat");}
+  FILE *direct = fopen("graphs/direct/direct_graphd.dat", "w");
+  if(direct == NULL){perror("graphs/direct/direct_graphd.dat");}
 
-  FILE *dgbtrf = fopen("dgbtrf_graphd.dat", "w");
-  if(dgbtrf == NULL){perror("dgbtrf_graphd.dat");}
+  FILE *dgbtrf = fopen("graphs/direct/dgbtrf_graphd.dat", "w");
+  if(dgbtrf == NULL){perror("graphs/direct/dgbtrf_graphd.dat");}
 
-  FILE *errav_direct = fopen("ferror_graphd.dat", "w");
-  if(errav_direct == NULL){perror("ferror_graphd.dat");}
+  FILE *errav_direct = fopen("graphs/direct/ferror_graphd.dat", "w");
+  if(errav_direct == NULL){perror("graphs/direct/ferror_graphd.dat");}
 
   for(nbpoints = 100; nbpoints < 10000; nbpoints += 100)
   {

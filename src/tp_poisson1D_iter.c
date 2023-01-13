@@ -47,9 +47,9 @@ int main(int argc,char *argv[])
   set_dense_RHS_DBC_1D(RHS,&la,&T0,&T1);
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   
-  write_vec(RHS, &la, "RHS_iter.dat");
-  write_vec(EX_SOL, &la, "EX_SOL_iter.dat");
-  write_vec(X, &la, "X_grid_iter.dat");
+  write_vec(RHS, &la, "dat/iter/analytical/RHS_iter.dat");
+  write_vec(EX_SOL, &la, "dat/iter/analytical/EX_SOL_iter.dat");
+  write_vec(X, &la, "dat/iter/analytical/X_grid_iter.dat");
 
   kv=0;
   ku=1;
@@ -59,8 +59,8 @@ int main(int argc,char *argv[])
   AB = (double *) malloc(sizeof(double)*lab*la);
 
   set_GB_operator_colMajor_poisson1D(AB, &lab, &la, &kv);
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "EX_AB_iter.dat");
-  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "MY_AB_iter.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "dat/iter/analytical/EX_AB_iter.dat");
+  write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "dat/iter/experimental/MY_AB_iter.dat");
 
   /********************************************/
   /* Solution (Richardson with optimal alpha) */
@@ -91,13 +91,13 @@ int main(int argc,char *argv[])
   kl = 1;
   MB = (double *) malloc(sizeof(double)*(lab)*la);
   extract_MB_jacobi_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "J_MB_iter.dat");
+  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "dat/iter/experimental/jacobi/J_MB_iter.dat");
 
   /* Solve with General Richardson */
   richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
-  write_vec(SOL, &la, "J_MB_SOL_iter.dat");
-  write_vec(resvec, &nbite, "J_RESVEC_graphit.dat");
+  write_vec(SOL, &la, "dat/iter/experimental/jacobi/J_MB_SOL_iter.dat");
+  write_vec(resvec, &nbite, "graphs/iter/J_RESVEC_graphit.dat");
 
   relres = make_relres(EX_SOL,SOL, &la);
   printf("\nNb iter for Jacobi : %d\n", nbite);
@@ -105,14 +105,14 @@ int main(int argc,char *argv[])
 
   MB = (double *) malloc(sizeof(double)*(lab)*la);
   extract_MB_gauss_seidel_tridiag(AB, MB, &lab, &la, &ku, &kl, &kv);
-  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "GS_MB_iter.dat");
+  write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "dat/iter/experimental/gauss-seidel/GS_MB_iter.dat");
 
   /* Solve with General Richardson */
   SOL=(double *) calloc(la, sizeof(double));
   richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
   
   /* Write solution */
-  write_vec(SOL, &la, "GS_MB_SOL_iter.dat");
+  write_vec(SOL, &la, "dat/iter/experimental/gauss-seidel/GS_MB_SOL_iter.dat");
   set_analytical_solution_DBC_1D(EX_SOL, X, &la, &T0, &T1);
   relres = make_relres(EX_SOL,SOL, &la);
 
@@ -120,16 +120,16 @@ int main(int argc,char *argv[])
   printf("The relative forward error for Gauss-Seidel is relres = %e\n",relres);
 
   /* Write convergence history */
-  write_vec(resvec, &nbite, "GS_RESVEC_graphit.dat");
+  write_vec(resvec, &nbite, "graphs/iter/GS_RESVEC_graphit.dat");
   
   /* Complexity testing */
   clock_t top;
   
-  FILE *iter = fopen("iter_graphit.dat", "w");
-  if(iter == NULL){perror("iter_graphit.dat");}
+  FILE *iter = fopen("graphs/iter/iter_graphit.dat", "w");
+  if(iter == NULL){perror("graphs/iter/iter_graphit.dat");}
 
-  FILE *ferr = fopen("errav_graphit.dat", "w");
-  if(ferr == NULL){perror("errav_graphit.dat");}
+  FILE *ferr = fopen("graphs/iter/errav_graphit.dat", "w");
+  if(ferr == NULL){perror("graphs/iter/errav_graphit.dat");}
   
   for(nbpoints = 100; nbpoints < 10000; nbpoints += 100)
   {
